@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture-Controlled Video with Upload</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: grey;
+            margin: 0;
+            padding: 0;
+        }
+
+        #video-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        video {
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #progress-bar-container {
+            width: 640px;
+            margin: 10px auto;
+            background-color: #ccc;
+            height: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #76c7c0;
+            border-radius: 5px;
+        }
+
+        #upload-container {
+            margin-top: 20px;
+        }
+
+        #upload-container input {
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        #gesture-status {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Upload Video -->
+    <div id="upload-container">
+        <input type="file" id="videoUpload" accept="video/*">
+    </div>
+
+   
+
+    <!-- Video Player with Overlay -->
+    <div id="video-container">
+        <video id="videoPlayer" width="1280" height="720" controls>
+            <source src="test.mp4" type="video/mp4">
+
+        </video>
+        <canvas id="overlayCanvas" width="1280" height="720"></canvas>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <!-- Gesture Status -->
+    <div id="gesture-status">Gesture: None</div>
+
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const overlayCanvas = document.getElementById('overlayCanvas');
+        const progressBarContainer = document.getElementById('progress-bar-container');
+        const progressBar = document.getElementById('progress-bar');
+        const videoUpload = document.getElementById('videoUpload');
+        const gestureStatus = document.getElementById('gesture-status');
+        const ctx = overlayCanvas.getContext('2d');
+
+        let lastGesture = null; // To prevent repeated triggering
+
+        // Initialize MediaPipe Hands
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.7,
+            minTrackingConfidence: 0.7
+        });
+
+        // Initialize webcam feed
+        const webcam = document.createElement('video'); // Hidden webcam element
+        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+            webcam.srcObject = stream;
+            webcam.play();
+        });
+
+        const camera = new Camera(webcam, {
+            onFrame: async () => {
+                await hands.send({ image: webcam });
+            },
+            width: 640,
+            height: 360
+        });
+        camera.start();
+
+        // Handle video upload
+        videoUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const videoURL = URL.createObjectURL(file);
+                videoPlayer.src = videoURL;
+                videoPlayer.play();
+            }
+        });
+
+        // Update progress bar as the video plays
+        videoPlayer.addEventListener('timeupdate', () => {
+            const progressPercentage = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        });
+
+
+            // Gesture Detection Logic
+         
+            hands.onResults((results) => {
+    // Clear the canvas
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+
+        // Draw landmarks
+        landmarks.forEach((landmark) => {
+            const x = landmark.x * overlayCanvas.width;
+            const y = landmark.y * overlayCanvas.height;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+        });
+
+        // Detect Gestures: Fist, Palm, and Peace
+        const fingerTips = [4, 8, 12, 16, 20]; // Thumb, Index, Middle, Ring, Pinky
+        let extendedFingers = 0;
+        const extendedFingersArray = [];
+
+        fingerTips.forEach((tip, index) => {
+            const fingerTip = landmarks[tip];
+            const base = landmarks[tip - (index === 0 ? 1 : 2)]; // Thumb uses wrist, others use base joint
+
+            if (index === 0) {
+                // Thumb: Compare x-coordinates
+                if (fingerTip.x > base.x) {
+                    extendedFingers++;
+                    extendedFingersArray.push('thumb');
+                }
+            } else {
+                // Other fingers: Compare y-coordinates
+                if (fingerTip.y < base.y) {
+                    extendedFingers++;
+                    extendedFingersArray.push(index === 1 ? 'index' : index === 2 ? 'middle' : index === 3 ? 'ring' : 'pinky');
+                }
+            }
+        });
+
+        if (extendedFingers === 0) {
+            // Fist Gesture Detected
+            if (!videoPlayer.paused) {
+                videoPlayer.pause();
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText(`Fist Detected: Pause`, 50, 50);
+                console.log("Fist detected. Video paused.");
+            }
+        } else if (extendedFingers === 5) {
+            // Palm Gesture Detected
+            if (videoPlayer.paused) {
+                videoPlayer.play();
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText(`Palm Detected: Play`, 50, 50);
+                console.log("Palm detected. Video playing.");
+            }
+        } else if (extendedFingers === 2 && extendedFingersArray.includes('index') && extendedFingersArray.includes('middle')) {
+            // Peace Gesture Detected
+            if (videoPlayer.paused) {
+                videoPlayer.play();
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText(`Peace Detected: Play`, 50, 50);
+                console.log("Peace sign detected. Video playing.");
+            }
+        }
+    }
+});
+
+
+
+
+
+    </script>
+</body>
+</html>

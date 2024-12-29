@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Detection with TensorFlow.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        video, canvas {
+            display: block;
+            margin: auto;
+        }
+        #webcam{
+                display:none;
+        }
+        #status {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Dog Detection with TensorFlow.js</h1>
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div id="status">Loading model...</div>
+
+    <script>
+        let model;
+        const webcam = document.getElementById("webcam");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const status = document.getElementById("status");
+
+        async function setupWebcam() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            webcam.srcObject = stream;
+
+            return new Promise((resolve) => {
+                webcam.onloadedmetadata = () => {
+                    webcam.play();
+                    canvas.width = webcam.videoWidth;
+                    canvas.height = webcam.videoHeight;
+                    resolve();
+                };
+            });
+        }
+
+        async function detectDog() {
+            const predictions = await model.detect(webcam);
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the video frame to the canvas
+            ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+
+            // Loop through predictions
+            predictions.forEach((prediction) => {
+                const [x, y, width, height] = prediction.bbox;
+
+                // Draw a rectangle around detected objects
+                ctx.strokeStyle = "red";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, width, height);
+
+                // Draw the label and confidence
+                ctx.fillStyle = "red";
+                ctx.font = "18px Arial";
+                ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x, y > 20 ? y - 10 : y + 20);
+
+                // Update the status if a dog is detected
+                if (prediction.class === "dog") {
+                    status.innerText = "Dog detected!";
+                }
+            });
+
+            // If no dog is detected
+            if (!predictions.some((p) => p.class === "dog")) {
+                status.innerText = "No dog detected.";
+            }
+        }
+
+        async function run() {
+            // Load the Coco SSD model
+            model = await cocoSsd.load();
+            status.innerText = "Model loaded! Starting webcam...";
+
+            // Setup the webcam
+            await setupWebcam();
+
+            // Start detecting objects
+            status.innerText = "Detecting...";
+            setInterval(detectDog, 1); // Run detection every 200ms
+        }
+
+        run();
+    </script>
+</body>
+</html>
