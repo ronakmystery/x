@@ -192,26 +192,21 @@
             }
         });
 
+        let gesture=""
         if (extendedFingers === 0) {
             // Fist Gesture Detected
+             gesture="fist"
             if (!videoPlayer.paused) {
                 videoPlayer.pause();
                 ctx.fillStyle = 'white';
                 ctx.font = '20px Arial';
                 ctx.fillText(`Fist Detected: Pause`, 50, 50);
+               
                 console.log("Fist detected. Video paused.");
-            }
-        } else if (extendedFingers === 5) {
-            // Palm Gesture Detected
-            if (videoPlayer.paused) {
-                videoPlayer.play();
-                ctx.fillStyle = 'white';
-                ctx.font = '20px Arial';
-                ctx.fillText(`Palm Detected: Play`, 50, 50);
-                console.log("Palm detected. Video playing.");
             }
         } else if (extendedFingers === 2 && extendedFingersArray.includes('index') && extendedFingersArray.includes('middle')) {
             // Peace Gesture Detected
+              gesture="peace"
             if (videoPlayer.paused) {
                 videoPlayer.play();
                 ctx.fillStyle = 'white';
@@ -220,6 +215,7 @@
                 console.log("Peace sign detected. Video playing.");
             }
         }
+        gestureStatus.innerHTML=gesture
     }
 });
 
