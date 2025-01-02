@@ -1,0 +1,36 @@
+<div>get and post fetch requests</div>
+
+<script>
+    async function fetchData() {
+        try {
+            // Fetch data from the GET endpoint
+            const response = await fetch('http://127.0.0.1:5000/get');
+            const data = await response.json();
+            console.log('GET Response:', data);
+          
+
+            // Data to send to the POST endpoint
+            const data2 = {
+                name: 'client',
+                message: 'client request'
+            };
+
+            // Send data to the POST endpoint
+            const response2 = await fetch('http://127.0.0.1:5000/post', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data2)
+            });
+
+            const result = await response2.json();
+            console.log('POST Response:', result);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Call the fetchData function when the script loads
+    fetchData();
+</script>
