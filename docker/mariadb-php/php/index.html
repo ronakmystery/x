@@ -10,8 +10,82 @@
     <p>This is a static HTML file served by Docker.</p>
 
 
-docker-compose down
-docker-compose up -d
+
 
 </body>
+<script>
+
+    
+
+const API_URL = "http://localhost:8080"; // Backend API base URL
+
+async function createUser() {
+  let user ={
+        username: "test",
+        email: "test@test.com"
+      }
+  try {
+    const response = await fetch(`${API_URL}/create-user.php`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(user),
+    });
+
+    const result = await response.json();
+    console.log(result)
+
+  
+    if (response.ok) {
+      return { success: true, message: result.message };
+    } else {
+      return { success: false, message: result.message || "Unknown error occurred." };
+    }
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return { success: false, message: "An error occurred while creating the user." };
+  }
+}
+
+
+async function getUsers() {
+  try {
+    // Send the GET request
+    const response = await fetch(`${API_URL}/get-users.php`);
+
+    // Check if the HTTP response is OK
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // Parse the JSON response
+    const result = await response.json();
+
+    // Log messages or handle data
+    if (result.message) {
+      console.log(result.message);
+    }
+
+    if (result.users) {
+      console.log("Users:", result.users);
+      return result.users; // Return the users for further use
+    } else {
+      console.warn("No users found in the response.");
+      return []; // Return an empty array if no users found
+    }
+  } catch (error) {
+    // Log any errors encountered during the request
+    console.error("Error fetching users:", error);
+    return []; // Return an empty array in case of an error
+  }
+}
+
+// Call the function and handle returned data
+getUsers().then(users => {
+  // console.log("Fetched Users:", users);
+});
+
+
+</script>
 </html>
