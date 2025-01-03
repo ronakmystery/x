@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Detection Video Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #video-container {
+            margin: 20px auto;
+            position: relative;
+        }
+
+        video, #webcam {
+            width: 640px;
+            height: 360px;
+            border-radius: 10px;
+            border: 2px solid #333;
+            margin-top: 20px;
+        }
+
+        #label-container div {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Class Detection Video Player</h1>
+    <p>Upload a video, and the player will pause if "Class A" or "Class B" is detected. It will unpause if the same class is detected in the webcam feed.</p>
+
+    <input type="file" id="videoUpload" accept="video/*">
+    <div id="video-container">
+        <video id="videoPlayer" controls></video>
+        <video id="webcam" autoplay playsinline muted></video>
+    </div>
+    <div id="label-container"></div>
+
+    <script>
+        const URL = "./model/";
+        let model, labelContainer, maxPredictions, videoElement;
+        let webcamStream;
+
+        async function initModel() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            // Load the model and metadata
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            // Setup labels
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = ""; // Clear previous labels
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function setupWebcam() {
+            const webcamElement = document.getElementById("webcam");
+            webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            webcamElement.srcObject = webcamStream;
+
+            return new Promise((resolve) => {
+                webcamElement.onloadedmetadata = () => {
+                    resolve(webcamElement);
+                };
+            });
+        }
+
+        let currentClass=""
+        let detected=false
+
+        async function predictWebcam(webcamElement, videoPlayer) {
+            const prediction = await model.predict(webcamElement);
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                if (
+                    (prediction[i].className === currentClass) &&
+                    prediction[i].probability >= 0.9 && detected==true
+                ) {
+                    videoPlayer.play();
+                    console.log(prediction[i]+" "+currentClass)
+                    break;
+                }
+            }
+        }
+
+        async function predictVideo(videoPlayer) {
+            const prediction = await model.predict(videoPlayer);
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+
+                // Check if Class A or B is detected and pause the video
+                if (
+                    (prediction[i].className === "A" || prediction[i].className === "B") &&
+                    prediction[i].probability >= 0.9 // Adjust the threshold as needed
+                ) {
+                    videoPlayer.pause();
+                    currentClass=prediction[i].className
+                    detected=true
+                    break;
+                }else{
+                    detected=false
+                }
+
+            }
+        }
+
+        // Video upload and playback
+        const videoUpload = document.getElementById("videoUpload");
+        const videoPlayer = document.getElementById("videoPlayer");
+        const webcamElement = document.getElementById("webcam");
+
+        videoUpload.addEventListener("change", async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    videoPlayer.src = e.target.result;
+                    videoPlayer.play();
+                };
+
+                reader.readAsDataURL(file); // Convert file to a data URL
+                await initModel(); // Initialize the model
+                await setupWebcam(); // Start webcam
+            }
+        });
+
+        videoPlayer.addEventListener("timeupdate", async () => {
+            if (videoPlayer.readyState === videoPlayer.HAVE_ENOUGH_DATA) {
+                await predictVideo(videoPlayer);
+            }
+        });
+
+        webcamElement.addEventListener("play", () => {
+            setInterval(async () => {
+                await predictWebcam(webcamElement, videoPlayer);
+            }, 10); // Adjust prediction interval as needed
+        });
+    </script>
+</body>
+</html>
