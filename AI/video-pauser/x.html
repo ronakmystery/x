@@ -1,160 +1,293 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Class Detection Video Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 20px;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Detection + MediaPipe Hands</title>
 
-        #video-container {
-            margin: 20px auto;
-            position: relative;
-        }
+  <!-- TensorFlow.js + Teachable Machine Image Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-        video, #webcam {
-            width: 640px;
-            height: 360px;
-            border-radius: 10px;
-            border: 2px solid #333;
-            margin-top: 20px;
-        }
-
-        #label-container div {
-            margin-top: 10px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-    </style>
+  <!-- MediaPipe Hands and Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    #video-container {
+      margin: 20px auto;
+      position: relative;
+    }
+    video, #webcam {
+      width: 640px;
+      height: 360px;
+      border-radius: 10px;
+      border: 2px solid #333;
+      margin-top: 20px;
+    }
+    #label-container div {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .status {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-    <h1>Class Detection Video Player</h1>
-    <p>Upload a video, and the player will pause if "Class A" or "Class B" is detected. It will unpause if the same class is detected in the webcam feed.</p>
+  <h1>Class Detection + Peace-Sign Gesture</h1>
+  <p>
+    pause video if class detected and show class from webcam to unpause  <br/>
+    peace sign to play <br/>
+    fist to pause
+  </p>
 
-    <input type="file" id="videoUpload" accept="video/*">
-    <div id="video-container">
-        <video id="videoPlayer" controls></video>
-        <video id="webcam" autoplay playsinline muted></video>
-    </div>
-    <div id="label-container"></div>
+  <!-- Video Upload -->
+  <input type="file" id="videoUpload" accept="video/*" />
 
-    <script>
-        const URL = "./model/";
-        let model, labelContainer, maxPredictions, videoElement;
-        let webcamStream;
+  <!-- Video & Webcam Container -->
+  <div id="video-container">
+    <video id="videoPlayer" controls></video>
+    <video id="webcam" autoplay playsinline muted></video>
+  </div>
 
-        async function initModel() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+  <!-- Class Prediction Labels -->
+  <div id="label-container"></div>
 
-            // Load the model and metadata
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+  <!-- Gesture Status (optional) -->
+  <div id="gesture-status" class="status">Gesture: None</div>
 
-            // Setup labels
-            labelContainer = document.getElementById("label-container");
-            labelContainer.innerHTML = ""; // Clear previous labels
-            for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.appendChild(document.createElement("div"));
-            }
+  <script>
+    // ====== Teachable Machine Model Setup ======
+    const URL = "./model/"; // Path to your Teachable Machine model folder
+    let model, labelContainer, maxPredictions;
+    let videoPlayer = document.getElementById("videoPlayer");
+    let webcamElement = document.getElementById("webcam");
+
+    // Track whether class  was detected (which triggers pause)
+    let currentClass = "";
+    let detected = false; // If class currently detected
+
+    async function initModel() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = "";
+      classNames=["water bottle","frog"]
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+      console.log("Teachable Machine model loaded.");
+    }
+
+    // ====== Webcam Setup ======
+    let webcamStream;
+    async function setupWebcam() {
+      webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      webcamElement.srcObject = webcamStream;
+      return new Promise((resolve) => {
+        webcamElement.onloadedmetadata = () => resolve(webcamElement);
+      });
+    }
+
+    // ====== Predict on Video Frames (Teachable Machine) ======
+    async function predictVideo() {
+      if (!model) return; // Ensure model is loaded
+      const prediction = await model.predict(videoPlayer);
+      for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction =
+          classNames[i] + ": " + prediction[i].probability.toFixed(2)*100+"%";
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+
+        // If Class A or B ≥ 0.9 confidence => pause video
+        if (
+          (prediction[i].className === "A" || prediction[i].className === "B") &&
+          prediction[i].probability >= 0.9 
+        ) {
+          videoPlayer.pause();
+          currentClass = prediction[i].className;
+          detected = true;
+          break; // Stop checking once we know it's paused
+        } else {
+          // If not A or B with required confidence, no detection
+          detected = false;
         }
+      }
+    }
 
-        async function setupWebcam() {
-            const webcamElement = document.getElementById("webcam");
-            webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            webcamElement.srcObject = webcamStream;
-
-            return new Promise((resolve) => {
-                webcamElement.onloadedmetadata = () => {
-                    resolve(webcamElement);
-                };
-            });
+    // ====== Predict on Webcam Frames (Teachable Machine) ======
+    // (If you also want TM-based unpausing on same class, keep this code. 
+    //  If you only want to rely on the peace sign for unpausing, you can remove it.)
+    async function predictWebcam() {
+      if (!model) return; // Ensure model is loaded
+      const prediction = await model.predict(webcamElement);
+      for (let i = 0; i < maxPredictions; i++) {
+        if (
+          prediction[i].className === currentClass &&
+          prediction[i].probability >= 0.9 &&
+          detected === true
+        ) {
+          videoPlayer.play(); // Unpause if we see the same class in the webcam
+          console.log("Detected same class in webcam, resuming video.");
+          break;
         }
+      }
+    }
 
-        let currentClass=""
-        let detected=false
+    // ====== MediaPipe Hands Setup ======
+    let handsInitialized = false;
+    const hands = new Hands({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
 
-        async function predictWebcam(webcamElement, videoPlayer) {
-            const prediction = await model.predict(webcamElement);
+    // Callback: fired each time Hands has a new result
+    hands.onResults(onHandResults);
 
-            for (let i = 0; i < maxPredictions; i++) {
-                const classPrediction =
-                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-                if (
-                    (prediction[i].className === currentClass) &&
-                    prediction[i].probability >= 0.9 && detected==true
-                ) {
-                    videoPlayer.play();
-                    console.log(prediction[i]+" "+currentClass)
-                    break;
-                }
-            }
+    function onHandResults(results) {
+      const gestureStatus = document.getElementById("gesture-status");
+
+      // If no hands detected, set text to None
+      if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+        gestureStatus.innerText = "Gesture: None";
+        return;
+      }
+
+      // Check the first detected hand
+      const landmarks = results.multiHandLandmarks[0];
+      // Indices for tips of each finger: thumb=4, index=8, middle=12, ring=16, pinky=20
+      const fingerTips = [4, 8, 12, 16, 20];
+      let extendedFingers = 0;
+      const extendedNames = [];
+
+      fingerTips.forEach((tip, i) => {
+        const tipLandmark = landmarks[tip];
+        // For each finger, compare tip landmark to lower joint
+        // (Thumb uses a slightly different approach, but let's keep it simple.)
+        // We'll assume if tip y < joint y => finger is extended
+        let baseIdx = tip - (i === 0 ? 1 : 2); // thumb vs others
+        const baseLandmark = landmarks[baseIdx];
+
+        // Check extension
+        if (i === 0) {
+          // Rough approach for thumb: compare x-coordinates
+          if (tipLandmark.x < baseLandmark.x) {
+            extendedFingers++;
+            extendedNames.push("thumb");
+          }
+        } else {
+          // Others: compare y-coordinates
+          if (tipLandmark.y < baseLandmark.y) {
+            extendedFingers++;
+            if (i === 1) extendedNames.push("index");
+            if (i === 2) extendedNames.push("middle");
+            if (i === 3) extendedNames.push("ring");
+            if (i === 4) extendedNames.push("pinky");
+          }
         }
+      });
 
-        async function predictVideo(videoPlayer) {
-            const prediction = await model.predict(videoPlayer);
-
-            for (let i = 0; i < maxPredictions; i++) {
-                const classPrediction =
-                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-                labelContainer.childNodes[i].innerHTML = classPrediction;
-
-                // Check if Class A or B is detected and pause the video
-                if (
-                    (prediction[i].className === "A" || prediction[i].className === "B") &&
-                    prediction[i].probability >= 0.9 // Adjust the threshold as needed
-                ) {
-                    videoPlayer.pause();
-                    currentClass=prediction[i].className
-                    detected=true
-                    break;
-                }else{
-                    detected=false
-                }
-
+      // Simple logic: if exactly 2 extended fingers and they are index+middle => Peace
+      if(extendedFingers===0){
+        gestureStatus.innerText = "Gesture: Fist";
+        if (!videoPlayer.paused) {
+                videoPlayer.pause();
+                console.log("Fist detected. Video paused.");
             }
+      }else if (
+        extendedFingers === 2 &&
+        extendedNames.includes("index") &&
+        extendedNames.includes("middle")
+      ) {
+        gestureStatus.innerText = "Gesture: Peace";
+        // If the video is paused, let's unpause
+        if (videoPlayer.paused) {
+          videoPlayer.play();
+          console.log("Peace sign detected, video playing...");
         }
+      } else {
+        // No recognized gesture or different gesture
+        gestureStatus.innerText = "Gesture: None";
+      }
+    }
 
-        // Video upload and playback
-        const videoUpload = document.getElementById("videoUpload");
-        const videoPlayer = document.getElementById("videoPlayer");
-        const webcamElement = document.getElementById("webcam");
+    // Initialize the MediaPipe Camera (for the same <video> webcamElement)
+    function setupHandsCamera() {
+      const camera = new Camera(webcamElement, {
+        onFrame: async () => {
+          // Only send frames if hands is ready
+          if (handsInitialized) {
+            await hands.send({ image: webcamElement });
+          }
+        },
+        width: 1280,
+        height: 720
+      });
+      camera.start();
+      handsInitialized = true;
+    }
 
-        videoUpload.addEventListener("change", async (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
+    // ====== Main Flow ======
+    const videoUpload = document.getElementById("videoUpload");
 
-                reader.onload = function (e) {
-                    videoPlayer.src = e.target.result;
-                    videoPlayer.play();
-                };
+    videoUpload.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          videoPlayer.src = e.target.result;
+          videoPlayer.play();
+        };
+        reader.readAsDataURL(file);
 
-                reader.readAsDataURL(file); // Convert file to a data URL
-                await initModel(); // Initialize the model
-                await setupWebcam(); // Start webcam
-            }
-        });
+        // Load the TM model if not already loaded
+        if (!model) {
+          await initModel();
+        }
+        // Setup the webcam if not already done
+        if (!webcamStream) {
+          await setupWebcam();
+          setupHandsCamera(); // Also init MediaPipe Hands on the same webcam
+        }
+      }
+    });
 
-        videoPlayer.addEventListener("timeupdate", async () => {
-            if (videoPlayer.readyState === videoPlayer.HAVE_ENOUGH_DATA) {
-                await predictVideo(videoPlayer);
-            }
-        });
+    // Each frame of video => check if it has Class A/B
+    videoPlayer.addEventListener("timeupdate", async () => {
+      if (videoPlayer.readyState === videoPlayer.HAVE_ENOUGH_DATA) {
+        await predictVideo();
+      }
+    });
 
-        webcamElement.addEventListener("play", () => {
-            setInterval(async () => {
-                await predictWebcam(webcamElement, videoPlayer);
-            }, 10); // Adjust prediction interval as needed
-        });
-    </script>
+    // Periodically check the webcam for the same class or run other logic
+    webcamElement.addEventListener("play", () => {
+      setInterval(async () => {
+        if (!webcamElement.paused && webcamElement.readyState === 4) {
+          await predictWebcam(); // If we want to unpause when the same class is found
+          // Meanwhile, onFrame for MediaPipe is handled automatically by camera_utils
+        }
+      }, 100);
+    });
+  </script>
 </body>
 </html>
