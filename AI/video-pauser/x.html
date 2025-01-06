@@ -77,8 +77,7 @@
   <!-- Class Prediction Labels -->
   <div id="label-container"></div>
 
-  <!-- Gesture Status (optional) -->
-  <div id="gesture-status" class="status">Gesture: None</div>
+  
 
   <script>
     // ====== Teachable Machine Model Setup ======
@@ -190,7 +189,6 @@
 
       // If no hands detected, set text to None
       if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-        gestureStatus.innerText = "Gesture: None";
         return;
       }
 
@@ -245,25 +243,27 @@
 
       // Simple logic: if exactly 2 extended fingers and they are index+middle => Peace
       if(extendedFingers<=1){
-        gestureStatus.innerText = "Gesture: Fist";
-        // if (!videoPlayer.paused) {
-        //         videoPlayer.pause();
-        //         console.log("Fist detected. Video paused.");
-        //     }
+        if (!videoPlayer.paused) {
+                videoPlayer.pause();
+                console.log("Fist detected. Video paused.");
+            }
+
+            ctx.fillStyle = 'red';
+                ctx.font = '50px Arial';
+                ctx.fillText(`Pause`, 50, 100);
       }else if (
         extendedFingers <=3 &&
         extendedNames.includes("index") &&
         extendedNames.includes("middle")
       ) {
-        gestureStatus.innerText = "Gesture: Peace";
         // If the video is paused, let's unpause
         if (videoPlayer.paused) {
           videoPlayer.play();
+          ctx.fillStyle = 'red';
+                ctx.font = '50px Arial';
+                ctx.fillText(`Play`, 50, 100);
           console.log("Peace sign detected, video playing...");
         }
-      } else {
-        // No recognized gesture or different gesture
-        gestureStatus.innerText = "Gesture: None";
       }
     }
 
