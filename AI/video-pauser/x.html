@@ -91,6 +91,7 @@
     let detected = false; // If class currently detected
 
     const ctx = overlayCanvas.getContext('2d');
+    let classNames=[]
 
 
     async function initModel() {
@@ -101,7 +102,7 @@
 
       labelContainer = document.getElementById("label-container");
       labelContainer.innerHTML = "";
-      classNames=["frog","water bottle",]
+      classNames=model._metadata.labels
       for (let i = 0; i < maxPredictions; i++) {
         labelContainer.appendChild(document.createElement("div"));
       }
@@ -118,19 +119,22 @@
       });
     }
 
+    let activation=.8
     // ====== Predict on Video Frames (Teachable Machine) ======
     async function predictVideo() {
       if (!model) return; // Ensure model is loaded
       const prediction = await model.predict(videoPlayer);
       for (let i = 0; i < maxPredictions; i++) {
-      
-
-        // If Class A or B ≥ 0.9 confidence => pause video
+    
         if (
-          (prediction[i].className === "A" || prediction[i].className === "B") &&
-          prediction[i].probability >= 0.9 
+          classNames.includes(prediction[i].className)
+           &&
+           prediction[i].className != "?"
+           &&
+          prediction[i].probability >= activation
         ) {
           videoPlayer.pause();
+          console.log(prediction[i])
           currentClass = prediction[i].className;
           detected = true;
           break; // Stop checking once we know it's paused
@@ -156,7 +160,7 @@
         labelContainer.childNodes[i].innerHTML = classPrediction;
         if (
           prediction[i].className === currentClass &&
-          prediction[i].probability >= 0.9 &&
+          prediction[i].probability >= activation &&
           detected === true
         ) {
           videoPlayer.play(); // Unpause if we see the same class in the webcam
@@ -183,6 +187,7 @@
     hands.onResults(onHandResults);
 
     function onHandResults(results) {
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
         
       const gestureStatus = document.getElementById("gesture-status");
@@ -194,7 +199,6 @@
 
       // Check the first detected hand
       const landmarks = results.multiHandLandmarks[0];
-      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
          // Draw landmarks
          landmarks.forEach((landmark) => {
@@ -243,14 +247,14 @@
 
       // Simple logic: if exactly 2 extended fingers and they are index+middle => Peace
       if(extendedFingers<=1){
-        if (!videoPlayer.paused) {
-                videoPlayer.pause();
-                console.log("Fist detected. Video paused.");
-            }
+        // if (!videoPlayer.paused) {
+        //         videoPlayer.pause();
+        //         console.log("Fist detected. Video paused.");
+        //     }
 
-            ctx.fillStyle = 'red';
-                ctx.font = '50px Arial';
-                ctx.fillText(`Pause`, 50, 100);
+        //     ctx.fillStyle = 'red';
+        //         ctx.font = '50px Arial';
+        //         ctx.fillText(`Pause`, 50, 100);
       }else if (
         extendedFingers <=3 &&
         extendedNames.includes("index") &&
@@ -322,7 +326,7 @@
           await predictWebcam(); // If we want to unpause when the same class is found
           // Meanwhile, onFrame for MediaPipe is handled automatically by camera_utils
         }
-      }, 100);
+      }, 10);
     });
   </script>
 </body>
