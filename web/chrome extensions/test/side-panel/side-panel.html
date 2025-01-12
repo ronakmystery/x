@@ -13,10 +13,9 @@
     }
     .note div{
       padding: 10px;
+      font-size: 15px;
     }
-    .selected-note{
-      border: 2px solid green;
-    }
+ 
     li {
       margin-bottom: 10px;
       padding: 10px;
@@ -27,20 +26,44 @@
       padding: 5px 10px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #d32f2f;
+    #instruction-container{
+      font-size: 10px;
     }
+    #instruction-container textarea, #note-input{
+      display: block;
+      height: 100px;
+
+    }
+    #screenshot-container{
+      background: grey;
+
+    }
+    #screenshot-preview{
+      width: 100px;
+    }
+
   </style>
 </head>
 <body>
-
-  <div>
-  
-  <input id="instruction" type="text" placeholder="Enter instruction for GPT" 
-  value="  Respond in just emojis  "
-  />
-    <button id="ask-gpt">Ask GPT</button>
+  <div id="screenshot-container">
+    <button id="take-screenshot">Take Screenshot</button>
+    <img id="screenshot-preview" alt="Screenshot preview will appear here" />
   </div>
+ 
+  <div>
+
+    <div id="instruction-container">
+      instruction
+      <textarea id="instruction" >1. **Summarize**: Main points only. 2. **Define**: Key term explanation. 3. **List**: Itemize essentials. 4. **Explain**: One-sentence clarity. 5. **Compare**: Key differences only. 6. **Analyze**: Core insights highlighted. 7. **Evaluate**: Pros and cons briefly. 8. **Outline**: Headings and subpoints. 9. **Describe**: Brief characteristics. 10. **Translate**: Key phrases only. </textarea>
+    </div>
+
+  </div>
+  
+  <div id="add-note-container">
+    <textarea id="note-input" type="text">Note...</textarea>
+    <button id="add-note-btn">Add Note</button>
+  </div>
+
   <ul id="notes"></ul>
   
 

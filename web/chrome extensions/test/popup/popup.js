@@ -1,9 +1,5 @@
-document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.local.get("gptResult", (data) => {
-      const responseDiv = document.getElementById("response");
-      responseDiv.textContent = data.gptResult || "No response yet!";
-  });
-});
+
+
 
 
 function applyTheme() {

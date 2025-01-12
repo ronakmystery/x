@@ -12,7 +12,9 @@
         "sidePanel",
         "contextMenus",
         "scripting",
-        "storage"
+        "storage",
+        "downloads",
+        "tabCapture"
     ],
     "background": {
         "service_worker": "service-worker.js"
