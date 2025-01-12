@@ -48,7 +48,7 @@ export async function GPT_IMG(url) {
                     content: [
                         {
                             "type": "text",
-                            "text": "What is in this image in the red highlighted area?"
+                            "text": "What is in this image"
                         },
                         {
                             "type": "image_url",
@@ -60,7 +60,7 @@ export async function GPT_IMG(url) {
                     ]
                 }
             ],
-            "max_tokens": 100
+            "max_tokens": 300
         }),
     });
     const data = await response.json();

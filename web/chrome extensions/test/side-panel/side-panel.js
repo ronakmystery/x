@@ -41,6 +41,7 @@ export const Notes = () => {
   });
 };
 
+
 // GPT Button Click Event
 let askGPT=async ()=>{
     try {
@@ -106,9 +107,18 @@ console.log("syncing")
 
 
 
+  let screenshotButton= document.getElementById("take-screenshot");
 
 let lookGPT=async(url)=>{
+
+ 
+ 
+
   const gptResponse = await GPT_IMG(url);
+
+
+  screenshotButton.textContent = "capture"; // Update button text
+  screenshotButton.disabled = false; // Disable button during API call
 
   chrome.storage.local.get({ notes: [] }, (data) => {
     const updatedNotes = [{ text: gptResponse },...data.notes];
@@ -121,6 +131,9 @@ let lookGPT=async(url)=>{
 }
 
 document.getElementById("take-screenshot").addEventListener("click", async () => {
+   screenshotButton.textContent = "loading..."; // Update button text
+  screenshotButton.disabled = true; // Disable button during API call
+
   try {
     // Query the active tab
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -195,7 +208,6 @@ function selectAreaForScreenshot() {
     overlay.style.left = "0";
     overlay.style.width = "100vw";
     overlay.style.height = "100vh";
-    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.2)";
     overlay.style.cursor = "crosshair";
     overlay.style.zIndex = "9999";
     document.body.appendChild(overlay);
@@ -204,7 +216,6 @@ function selectAreaForScreenshot() {
     const selectionBox = document.createElement("div");
     selectionBox.style.position = "absolute";
     selectionBox.style.border = "2px dashed red";
-    selectionBox.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
     overlay.appendChild(selectionBox);
 
     overlay.addEventListener("mousedown", (e) => {
@@ -235,4 +246,7 @@ function selectAreaForScreenshot() {
     });
   });
 }
+
+
+
 
