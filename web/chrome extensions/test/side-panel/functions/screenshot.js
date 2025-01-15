@@ -4,26 +4,35 @@ const preview = document.getElementById("screenshot-preview");
 
 import { GPT_IMG } from "./gpt.js";
 
+let lookGPT = async (url) => {
+  try {
+    // Call GPT_IMG to get the image (Base64 or URL)
+    const gptResponse = await GPT_IMG(url);
 
-let lookGPT=async(url)=>{
-
- 
- //api call
-  const gptResponse = await GPT_IMG(url);
-
+    // Reset UI states
     preview.src = "";
-  screenshotButton.textContent = "capture"; // Update button text
-  screenshotButton.disabled = false; // Disable button during API call
+    screenshotButton.textContent = "Capture"; // Reset button text
+    screenshotButton.disabled = false; // Enable button
 
-  chrome.storage.local.get({ notes: [] }, (data) => {
-    const updatedNotes = [{ text: gptResponse },...data.notes];
+    // Save to Chrome Storage
+    chrome.storage.local.get({ notes: [] }, (data) => {
+      // Assume `gptResponse` contains both `text` and `image` (adjust if different)
+      const updatedNotes = [
+        { text: gptResponse, image: url }, // Add both text and image
+        ...data.notes,
+      ];
 
-    chrome.storage.local.set({ notes: updatedNotes }, () => {
-      Notes(); // Re-render the notes
+      chrome.storage.local.set({ notes: updatedNotes }, () => {
+        console.log("Note with image saved successfully!");
+      });
     });
-  });
+  } catch (error) {
+    console.error("Error saving image with note:", error.message);
+    screenshotButton.textContent = "Capture"; // Reset UI on error
+    screenshotButton.disabled = false;
+  }
+};
 
-}
 
 document.getElementById("take-screenshot").addEventListener("click", async () => {
     screenshotButton.textContent = "loading..."; // Update button text

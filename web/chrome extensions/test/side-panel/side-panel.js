@@ -1,5 +1,5 @@
 import "./functions/screenshot.js"
-import { GPT } from "./functions/gpt.js";
+import { GPT,GPT_IMAGINE } from "./functions/gpt.js";
 
 const notesList = document.getElementById("notes");
 
@@ -22,19 +22,29 @@ export const Notes = () => {
       noteText.textContent = note.text;
       li.appendChild(noteText);
 
+      // Display note image (if exists)
+      if (note.image) {
+        const noteImage = document.createElement("img");
+        noteImage.src =note.image;
+        noteImage.alt = "Generated Image";
+        noteImage.style.maxWidth = "200px"; // Adjust size as needed
+        noteImage.style.display = "block"; // Ensure it appears on a new line
+        noteImage.style.marginTop = "10px"; // Add spacing
+        li.appendChild(noteImage);
+      }
 
-       // Delete Button
-       const deleteBtn = document.createElement("button");
-       deleteBtn.textContent = "Delete";
-       deleteBtn.style.marginLeft = "10px";
-       deleteBtn.addEventListener("click", () => {
-         // Remove the note from storage
-         chrome.storage.local.get({ notes: [] }, (data) => {
-           const updatedNotes = data.notes.filter((_, i) => i !== index);
-           chrome.storage.local.set({ notes: updatedNotes }, Notes); // Re-render the notes
-         });
-       });
-       li.appendChild(deleteBtn);
+      // Delete Button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Delete";
+      deleteBtn.style.marginLeft = "10px";
+      deleteBtn.addEventListener("click", () => {
+        // Remove the note from storage
+        chrome.storage.local.get({ notes: [] }, (data) => {
+          const updatedNotes = data.notes.filter((_, i) => i !== index);
+          chrome.storage.local.set({ notes: updatedNotes }, Notes); // Re-render the notes
+        });
+      });
+      li.appendChild(deleteBtn);
 
       // Append the note to the list
       notesList.appendChild(li);
@@ -43,43 +53,49 @@ export const Notes = () => {
 };
 
 
+
 // GPT Button Click Event
-let askGPT=async ()=>{
-    try {
+let askGPT = async () => {
+  try {
+    const noteText = noteInput.value.trim();
 
-        const noteText = noteInput.value.trim();
-      
-        if (!noteText) {
-          alert("bruv u need to write a note!");
-          return;
-        }
+    if (!noteText) {
+      alert("bruv u need to write a note!");
+      return;
+    }
 
+    addNoteBtn.textContent = "Loading..."; // Update button text
+    addNoteBtn.disabled = true; // Disable button during API call
 
-        addNoteBtn.textContent = "Loading..."; // Update button text
-        addNoteBtn.disabled = true; // Disable button during API call
+    // Call GPT for text response
+    const gptResponse = await GPT(instruction.value, noteText);
 
-        const gptResponse = await GPT(instruction.value, noteText);
+    // Call GPT_IMAGINE for image generation
+    const img = await GPT_IMAGINE(noteText);
 
-        addNoteBtn.textContent = "Add Note"; // Update button text
-        addNoteBtn.disabled = false; // Disable button during API call
+    addNoteBtn.textContent = "Add Note"; // Reset button text
+    addNoteBtn.disabled = false; // Re-enable button
 
-        chrome.storage.local.get({ notes: [] }, (data) => {
-          const updatedNotes = [{ text: gptResponse },...data.notes];
-      
-          chrome.storage.local.set({ notes: updatedNotes }, () => {
-            noteInput.value = ""; // Clear the input field
-            Notes(); // Re-render the notes
-          });
-        });
+    // Retrieve and update Chrome storage
+    chrome.storage.local.get({ notes: [] }, (data) => {
+      const updatedNotes = [
+        { text: gptResponse, image: img }, // Add both text and image
+        ...data.notes,
+      ];
 
-    
-      } catch (error) {
-        console.error("Error calling GPT:", error);
-      }
-}
+      chrome.storage.local.set({ notes: updatedNotes }, () => {
+        noteInput.value = ""; // Clear the input field
+      });
+    });
+  } catch (error) {
+    console.error("Error calling GPT:", error);
 
-// Initial rendering of notes
-Notes();
+    // Reset button state on error
+    addNoteBtn.textContent = "Add Note";
+    addNoteBtn.disabled = false;
+  }
+};
+
 
 
 // Add Note Button Click Event
@@ -106,6 +122,7 @@ console.log("syncing")
 
   Notes()
 
+  // GPT_IMAGINE()
 
 
 
