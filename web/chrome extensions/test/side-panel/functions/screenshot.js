@@ -6,13 +6,24 @@ import { GPT_IMG } from "./gpt.js";
 
 let lookGPT = async (url) => {
   try {
+
+
+    chrome.runtime.sendMessage({ action: "gpt" });
+    screenshotButton.textContent="analyzing..."
+
     // Call GPT_IMG to get the image (Base64 or URL)
     const gptResponse = await GPT_IMG(url);
+          // await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    chrome.runtime.sendMessage({ action: "end" });
+
 
     // Reset UI states
     preview.src = "";
-    screenshotButton.textContent = "Capture"; // Reset button text
+    screenshotButton.textContent = "analyze"; // Reset button text
     screenshotButton.disabled = false; // Enable button
+    preview.classList.remove("show-preview")
+    screenshotButton.classList.remove("capture")
 
     // Save to Chrome Storage
     chrome.storage.local.get({ notes: [] }, (data) => {
@@ -35,8 +46,9 @@ let lookGPT = async (url) => {
 
 
 document.getElementById("take-screenshot").addEventListener("click", async () => {
-    screenshotButton.textContent = "loading..."; // Update button text
+    screenshotButton.textContent = "select area"; // Update button text
    screenshotButton.disabled = true; // Disable button during API call
+   screenshotButton.classList.add("capture")
  
    try {
      // Query the active tab
@@ -59,6 +71,7 @@ document.getElementById("take-screenshot").addEventListener("click", async () =>
  
  
        // Display the cropped screenshot in the side panel
+       preview.classList.add("show-preview")
        preview.src = dataUrl;
  
        await chrome.scripting.executeScript({
@@ -73,6 +86,9 @@ document.getElementById("take-screenshot").addEventListener("click", async () =>
            }
          },
        });
+
+       preview.style="display:block"
+
  
        lookGPT(dataUrl)
  
@@ -107,6 +123,11 @@ export function captureVisibleTab() {
  // Function to select an area and return its coordinates
 export function selectAreaForScreenshot() {
    return new Promise((resolve) => {
+
+    // const animation=document.createElement("div")
+    // animation.id="screenshot-animation"
+    // document.body.appendChild(animation)
+
      // Create overlay for area selection
      const overlay = document.createElement("div");
      overlay.id = "screenshot";
@@ -171,6 +192,7 @@ export function selectAreaForScreenshot() {
  
        // Clean up the overlay
        document.body.removeChild(overlay);
+       document.body.removeChild(animation);
      });
    });
  }

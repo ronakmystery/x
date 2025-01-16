@@ -25,9 +25,12 @@ export async function GPT(instruction, prompt) {
             messages: [{ role: "user", content: customPrompt }],
         }),
     });
-    const data = await response.json();
+    let data = await response.json();
+    data=data.choices[0]?.message?.content || "No response received."
+    data= data.match(/```json\s([\s\S]*?)```/)[1];
     console.log(data)
-    return data.choices[0]?.message?.content || "No response received.";
+
+    return data
 }
 
 
@@ -90,7 +93,12 @@ export async function GPT_IMG(url) {
             "max_tokens": 300
         }),
     });
-    const data = await response.json();
-    return data.choices[0]?.message?.content || "No response received.";
+
+    let data = await response.json();
+    data=data.choices[0]?.message?.content || "No response received."
+    data= data.match(/```json\s([\s\S]*?)```/)[1];
+    console.log(data)
+
+    return data
 
 }

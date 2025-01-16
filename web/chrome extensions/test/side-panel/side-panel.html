@@ -1,68 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Notes</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 10px;
-    }
-    #notes {
-      list-style: none;
-      padding: 0;
-    }
-    .note div{
-      padding: 10px;
-      font-size: 15px;
-    }
- 
-    li {
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ccc;
-    }
-    button {
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-    }
-    #instruction-container{
-      font-size: 10px;
-    }
-    #instruction-container textarea, #note-input{
-      display: block;
-      height: 100px;
-
-    }
-    #screenshot-container{
-      background: grey;
-
-    }
-    #screenshot-preview{
-      width: 100px;
-    }
-
-  </style>
+  <!-- <title>Analyze</title> -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+  <link href="./styles.css" rel="stylesheet">
 </head>
 <body>
-  <div id="screenshot-container">
-    <button id="take-screenshot">capture</button>
-    <img id="screenshot-preview" alt="Screenshot preview will appear here" />
-  </div>
- 
-  <div>
+    <div id="screenshot-container">    <img id="screenshot-preview" />
+    </div>
+    <button id="take-screenshot">analyze</button> 
+  <!-- <div>
 
     <div id="instruction-container">
       instruction
       <textarea id="instruction" >1. **Summarize**: Main points only. 2. **Define**: Key term explanation. 3. **List**: Itemize essentials. 4. **Explain**: One-sentence clarity. 5. **Compare**: Key differences only. 6. **Analyze**: Core insights highlighted. 7. **Evaluate**: Pros and cons briefly. 8. **Outline**: Headings and subpoints. 9. **Describe**: Brief characteristics. 10. **Translate**: Key phrases only. </textarea>
     </div>
 
-  </div>
-  
+  </div> -->
+<!--   
   <div id="add-note-container">
     <textarea id="note-input" type="text">Note...</textarea>
     <button id="add-note-btn">Add Note</button>
-  </div>
+  </div> -->
 
   <ul id="notes"></ul>
   

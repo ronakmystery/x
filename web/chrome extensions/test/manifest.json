@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "X",
+    "name": "Analyze",
     "version": "1.0",
     "description": "",
     "options_page": "./options-page/options.html",
@@ -22,7 +22,7 @@
     "action": {
         "default_popup": "./popup/popup.html",
         "default_icon": {
-            "128": "icon.png"
+            "128": "logo.png"
         }
     },
     "host_permissions": [

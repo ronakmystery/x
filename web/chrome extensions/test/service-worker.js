@@ -13,3 +13,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   });
   
+
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    chrome.action.setBadgeBackgroundColor({ color: "white" }); // Orange color for waiting
+
+    if (message.action === "gpt") {
+      // Show badge text and change background color
+      chrome.action.setBadgeText({ text: "🔍" }); 
+    }else if(message.action==="end"){
+      chrome.action.setBadgeText({ text: "" }); 
+    }
+
+    return true; // Indicate asynchronous response
+  });
+  

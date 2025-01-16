@@ -3,9 +3,9 @@ import { GPT,GPT_IMAGINE } from "./functions/gpt.js";
 
 const notesList = document.getElementById("notes");
 
-const noteInput = document.getElementById("note-input");
-const addNoteBtn = document.getElementById("add-note-btn");
-const instruction = document.getElementById("instruction");
+// const noteInput = document.getElementById("note-input");
+// const addNoteBtn = document.getElementById("add-note-btn");
+// const instruction = document.getElementById("instruction");
 
 
 
@@ -17,26 +17,46 @@ export const Notes = () => {
       const li = document.createElement("li");
       li.className = "note"; // Add base class for styling
 
-      // Display note text
-      const noteText = document.createElement("div");
-      noteText.textContent = note.text;
-      li.appendChild(noteText);
 
       // Display note image (if exists)
       if (note.image) {
+        let noteImageContainer=document.createElement("div")
+        noteImageContainer.className="img-container"
         const noteImage = document.createElement("img");
         noteImage.src =note.image;
         noteImage.alt = "Generated Image";
-        noteImage.style.maxWidth = "200px"; // Adjust size as needed
-        noteImage.style.display = "block"; // Ensure it appears on a new line
-        noteImage.style.marginTop = "10px"; // Add spacing
-        li.appendChild(noteImage);
+        noteImageContainer.appendChild(noteImage);
+        li.appendChild(noteImageContainer)
       }
+
+
+      //note text
+      let displayData=JSON.parse(note.text)
+        let display=document.createElement("div")
+        display.className="note-text"
+        let title = document.createElement("div");
+        title.className="title"
+        title.textContent = displayData.title;
+        display.appendChild(title);
+        let description = document.createElement("div");
+        description.className="description"
+        description.textContent = displayData.description;
+        display.appendChild(description);
+        let tagsContainer = document.createElement("div");
+        tagsContainer.className = "tags";
+        displayData.tags.forEach((tag) => {
+          let tagElement = document.createElement("span");
+          tagElement.className = "tag";
+          tagElement.textContent = tag;
+          tagsContainer.appendChild(tagElement);
+        });
+        display.appendChild(tagsContainer);
+        li.appendChild(display)
 
       // Delete Button
       const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "Delete";
-      deleteBtn.style.marginLeft = "10px";
+      deleteBtn.textContent = "delete";
+      deleteBtn.className="delete-note"
       deleteBtn.addEventListener("click", () => {
         // Remove the note from storage
         chrome.storage.local.get({ notes: [] }, (data) => {
@@ -55,53 +75,53 @@ export const Notes = () => {
 
 
 // GPT Button Click Event
-let askGPT = async () => {
-  try {
-    const noteText = noteInput.value.trim();
+// let askGPT = async () => {
+//   try {
+//     const noteText = noteInput.value.trim();
 
-    if (!noteText) {
-      alert("bruv u need to write a note!");
-      return;
-    }
+//     if (!noteText) {
+//       alert("bruv u need to write a note!");
+//       return;
+//     }
 
-    addNoteBtn.textContent = "Loading..."; // Update button text
-    addNoteBtn.disabled = true; // Disable button during API call
+//     addNoteBtn.textContent = "Loading..."; // Update button text
+//     addNoteBtn.disabled = true; // Disable button during API call
 
-    // Call GPT for text response
-    const gptResponse = await GPT(instruction.value, noteText);
+//     // Call GPT for text response
+//     const gptResponse = await GPT(instruction.value, noteText);
 
-    // Call GPT_IMAGINE for image generation
-    const img = await GPT_IMAGINE(noteText);
+//     // Call GPT_IMAGINE for image generation
+//     const img = await GPT_IMAGINE(noteText);
 
-    addNoteBtn.textContent = "Add Note"; // Reset button text
-    addNoteBtn.disabled = false; // Re-enable button
+//     addNoteBtn.textContent = "Add Note"; // Reset button text
+//     addNoteBtn.disabled = false; // Re-enable button
 
-    // Retrieve and update Chrome storage
-    chrome.storage.local.get({ notes: [] }, (data) => {
-      const updatedNotes = [
-        { text: gptResponse, image: img }, // Add both text and image
-        ...data.notes,
-      ];
+//     // Retrieve and update Chrome storage
+//     chrome.storage.local.get({ notes: [] }, (data) => {
+//       const updatedNotes = [
+//         { text: gptResponse, image: img }, // Add both text and image
+//         ...data.notes,
+//       ];
 
-      chrome.storage.local.set({ notes: updatedNotes }, () => {
-        noteInput.value = ""; // Clear the input field
-      });
-    });
-  } catch (error) {
-    console.error("Error calling GPT:", error);
+//       chrome.storage.local.set({ notes: updatedNotes }, () => {
+//         noteInput.value = ""; // Clear the input field
+//       });
+//     });
+//   } catch (error) {
+//     console.error("Error calling GPT:", error);
 
-    // Reset button state on error
-    addNoteBtn.textContent = "Add Note";
-    addNoteBtn.disabled = false;
-  }
-};
+//     // Reset button state on error
+//     addNoteBtn.textContent = "Add Note";
+//     addNoteBtn.disabled = false;
+//   }
+// };
 
 
 
 // Add Note Button Click Event
-addNoteBtn.addEventListener("click", () => {
-  askGPT()
-  });
+// addNoteBtn.addEventListener("click", () => {
+//   askGPT()
+//   });
 
   
   
@@ -121,8 +141,6 @@ console.log("syncing")
   });
 
   Notes()
-
-  // GPT_IMAGINE()
 
 
 

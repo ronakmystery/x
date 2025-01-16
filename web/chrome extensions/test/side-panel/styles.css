@@ -1,27 +1,128 @@
+:root {
+    --primary-font: "Lato", serif;
+    --secondary-font: "Montserrat", sans-serif;
+    --shadow: 0 3px 6px rgba(0, 0, 0, .16), 0 3px 6px rgba(0, 0, 0, .23);
+    --inset-shadow: #000 1px 1px 3px 0 inset;
+    --theme: #6b63ff;
+    --yellow: #ffee58;
+    --blue: #42a5f5;
+    --green: #66bb6a;
+    --red: #ef5350;
+    --dark: #1e1e1e;
+    --light: #f0f0f0;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    margin: 10px;
+    font-family:var(--primary-font);
+    margin: 0px;
+
+    
+  }
+  ::-webkit-scrollbar {
+    display: none; /* Hide scrollbar */
+  }
+
+  button{
+    font-family:var(--primary-font);
   }
   
-  h2 {
-    margin-bottom: 10px;
-  }
+
   
-  input, textarea, button {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 5px;
-  }
-  
-  ul {
-    list-style: none;
+  #notes {
+    overflow: scroll;
+    height: calc(100vh - 70px);
+    box-shadow: var(--inset-shadow);
+    margin: 0;
     padding: 0;
   }
   
-  li {
-    padding: 5px;
-    border: 1px solid #ccc;
-    margin-bottom: 5px;
+
+
+  .note{
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin: 15px;
+    overflow: auto;
+    position: relative;
+  }
+  .img-container{
+  }
+  .note img{
+    height: 100px;
+    display: block;
+    margin: 0px auto;
+  }
+  .note-text{
+    .title{
+    padding: 10px;
+      font-size: 14px;
+    }
+    .description{
+        padding: 10px;
+      font-size: 12px;
+    }
+    .tags{
+        padding: 10px;
+    }
+    .tag{
+      margin: 5px 10px;
+      padding: 5px;
+      font-size: 10px;
+      border-radius: 10px;
+      box-shadow:var(--shadow);
+      display: inline-block;
+    }
+  }
+.delete-note{
+    position: absolute;
+    right:0;top:0;
+    border-radius: 0 10px 0 10px;
+    box-shadow: var(--inset-shadow);
+    &:hover{
+        background: var(--red);
+    }
+}
+  button {
+    border: none;
+    padding: 5px 10px;
     cursor: pointer;
   }
+  #instruction-container{
+    font-size: 10px;
+  }
+  #instruction-container textarea, #note-input{
+    display: block;
+    height: 100px;
+
+  }
+  #screenshot-container{
+
+  }
+
+
+  #take-screenshot{
+    width: 100%;
+    background: var(--green);
+    box-shadow: var(--shadow);
+    text-transform: uppercase;
+    color: white;
+    font-size: 15px;
+    transition: .3s;
+  }
+  .capture{
+    background: var(--yellow) !important;
+    color: black !important;
+    box-shadow: var(--inset-shadow) !important;
+  }
+  #screenshot-preview{
+    height: 0;
+    margin: auto;
+    transition: .7s;
+    display: none;
+  }
+  .show-preview{
+    display: block !important;
+    height: 100px !important;
+  }
+
   
