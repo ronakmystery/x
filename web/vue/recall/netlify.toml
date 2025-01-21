@@ -1,2 +1,15 @@
 [build]
-command = "CI= npm run build"
+  base    = "x/web/vue/recall"
+  publish = "dist"
+  command = "npm run build"
+
+[dev]
+  framework = "vite" # Specify Vite if you're using it with Vue.js
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[env]
+  NODE_ENV = "production"
