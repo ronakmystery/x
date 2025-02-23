@@ -1,7 +1,7 @@
 
 import { config } from './api.js';
 
-let format="respond with json {title,description,tags}: "
+let format="respond with json {title,description,tags}  and also try to answer question in description: "
 
 export async function GPT(instruction, prompt) {
 
@@ -62,7 +62,7 @@ let instruction=""
 }
 
 
-export async function GPT_IMG(url) {
+export async function GPT_IMG(url,prompt_request) {
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -78,7 +78,7 @@ export async function GPT_IMG(url) {
                     content: [
                         {
                             "type": "text",
-                            "text": format
+                            "text": prompt_request +" always return in easily readable text format"
                         },
                         {
                             "type": "image_url",
@@ -95,10 +95,8 @@ export async function GPT_IMG(url) {
     });
 
     let data = await response.json();
-    data=data.choices[0]?.message?.content || "No response received."
-    data= data.match(/```json\s([\s\S]*?)```/)[1];
     console.log(data)
-
+    data=data.choices[0]?.message?.content || "No response received."
     return data
 
 }

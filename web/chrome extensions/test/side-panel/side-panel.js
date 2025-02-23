@@ -17,6 +17,8 @@ export const Notes = () => {
       const li = document.createElement("li");
       li.className = "note"; // Add base class for styling
 
+      console.log(note)
+
 
       // Display note image (if exists)
       if (note.image) {
@@ -30,28 +32,17 @@ export const Notes = () => {
       }
 
 
-      //note text
-      let displayData=JSON.parse(note.text)
-        let display=document.createElement("div")
-        display.className="note-text"
-        let title = document.createElement("div");
-        title.className="title"
-        title.textContent = displayData.title;
-        display.appendChild(title);
-        let description = document.createElement("div");
-        description.className="description"
-        description.textContent = displayData.description;
-        display.appendChild(description);
-        let tagsContainer = document.createElement("div");
-        tagsContainer.className = "tags";
-        displayData.tags.forEach((tag) => {
-          let tagElement = document.createElement("span");
-          tagElement.className = "tag";
-          tagElement.textContent = tag;
-          tagsContainer.appendChild(tagElement);
-        });
-        display.appendChild(tagsContainer);
-        li.appendChild(display)
+      // //note text
+      
+      li.appendChild(Object.assign(document.createElement("div"), { 
+        className: "note-prompt", textContent: note.prompt_request || "?" 
+      }));
+
+      li.appendChild(Object.assign(document.createElement("div"), { 
+        className: "note-text", textContent: note.text || "?" 
+      }));
+ 
+      
 
       // Delete Button
       const deleteBtn = document.createElement("button");

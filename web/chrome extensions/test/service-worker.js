@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    chrome.action.setBadgeBackgroundColor({ color: "white" }); // Orange color for waiting
+    chrome.action.setBadgeBackgroundColor({ color: "white" }); 
 
     if (message.action === "gpt") {
       // Show badge text and change background color

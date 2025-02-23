@@ -1,2 +1,5 @@
-# .gitignore
 api.js
+
+*.crx
+
+*.pem

@@ -24,6 +24,7 @@ body {
 
   button{
     font-family:var(--primary-font);
+    user-select: none;
   }
   
 
@@ -45,33 +46,30 @@ body {
     overflow: auto;
     position: relative;
   }
+
   .img-container{
+    overflow: scroll;
+    box-shadow: var(--inset-shadow);
+    margin: 40px 10px;
+    border-radius: 5px;
+    height: 150px;
   }
+
   .note img{
-    height: 100px;
+    width: calc(100% - 20px);
     display: block;
-    margin: 0px auto;
+    margin: 20px auto;
+    box-shadow: var(--shadow);
+    border-radius: 5px;
+  }
+  .note-prompt{
+    margin: 20px;
+    margin-bottom: 0;
+    font-size: 16px;
   }
   .note-text{
-    .title{
-    padding: 10px;
-      font-size: 14px;
-    }
-    .description{
-        padding: 10px;
-      font-size: 12px;
-    }
-    .tags{
-        padding: 10px;
-    }
-    .tag{
-      margin: 5px 10px;
-      padding: 5px;
-      font-size: 10px;
-      border-radius: 10px;
-      box-shadow:var(--shadow);
-      display: inline-block;
-    }
+    margin: 20px;
+    font-size: 12px;
   }
 .delete-note{
     position: absolute;
@@ -93,9 +91,6 @@ body {
   #instruction-container textarea, #note-input{
     display: block;
     height: 100px;
-
-  }
-  #screenshot-container{
 
   }
 
